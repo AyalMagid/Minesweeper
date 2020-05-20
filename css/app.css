@@ -1,0 +1,33 @@
+
+
+.game-board td {
+    width: 40px;
+    height:40px;
+    text-align: center;
+    font-size:1.4em;
+}
+
+.hidden {
+    background-color: lightgray;
+}
+
+
+.flipped {
+    background-color: gray;
+
+}
+
+.easy {
+    background-color: green;
+}
+
+.med {
+    background-color: yellow
+}
+
+.hard {
+    background-color: red;
+}
+
+
+

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mine Sweeper</title>
+    <link rel="stylesheet" href="css/app.css"/>
+</head>
+
+<body onload="init()" >
+
+    <h1>Mine Sweeper</h1>
+
+    <div class="timer"></div>
+
+    <button onclick="setMode(this)" class="easy">easy</button>
+    <button onclick="setMode(this)" class="med">med</button>
+    <button onclick="setMode(this)" class="hard">hard</button>
+    
+    <table>
+        <tbody class="game-board"></tbody>
+    </table>
+
+    <script src="js/util.js"></script>
+    <script src="js/game.js"></script>
+</body>
+
+</html>
+
+<!-- onmousedown="mouseClicked(event)" -->
