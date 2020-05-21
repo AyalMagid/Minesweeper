@@ -1,9 +1,17 @@
 'use strict'
-var gBoard = []
 const MINE = '💣'
 const FLAG = '🚩'
+const SMILE = '😄'
+const SMILE_BOMBED = '🤯'
+const SMILE_WIN = '😎'
+var LIVES = ' '
+var gElSmileBtn = document.querySelector('.emoji')
 var gameStartedInterval
-
+var gBoard = []
+var isManual = false
+var gElLive = document.querySelector('.life')
+var gElGameOver = document.querySelector('.game-over')
+var gElWinner = document.querySelector('.winner')
 
 // This is an object by which the board size is set
 var gLevel = {
@@ -23,17 +31,30 @@ var gGame = {
     //  How many seconds passed
     secsPassed: 0,
     // how many lives? 
-    lives: 3
+    lives: 3,
+    // mines allready placed
+    minesPlaced: 0
 }
 
 function init() {
+
+    gBoard = []
+    
+    gElLive.innerText = '❤️❤️❤️'
+
+    gElGameOver.style.visibility = 'hidden'
+
+    gElWinner.style.visibility = 'hidden'
+
+    gElSmileBtn.innerText = SMILE
 
     gGame = {
         isOn: false,
         shownCount: 0,
         markedCount: 0,
         secsPassed: 0,
-        lives: 3
+        lives: 3,
+        minesPlaced: 0
     }
 
     clearInterval(gameStartedInterval)
@@ -47,6 +68,7 @@ function init() {
 // updating the board by difficuly
 function setMode(elBtn) {
     var currMode = elBtn.className;
+    isManual = false
     switch (currMode) {
         case 'easy':
             gLevel = { SIZE: 4, MINES: 2 }
@@ -79,22 +101,27 @@ function buildBoard(board) {
         }
     }
 
-    // placing mines
-    i = 0
-    while (i < gLevel.MINES) {
-        var rndIdxRow = getRandomIntInclusive(0, gLevel.SIZE - 1)
-        var colIdxRow = getRandomIntInclusive(0, gLevel.SIZE - 1)
-        if (gBoard[rndIdxRow][colIdxRow].isMine) continue
-        gBoard[rndIdxRow][colIdxRow].isMine = true
-        i++
-    }
-
-    // updating minds count for each cell when board is ready, might change after first clik
-    updateMindsCount()
-
     return board
 }
 
+// placing the mines
+function placeMinesRnd(firstClickI, firstClickJ) {
+    while (gGame.minesPlaced < gLevel.MINES) {
+        var rndIdxRow = getRandomIntInclusive(0, gLevel.SIZE - 1)
+        var colIdxRnd = getRandomIntInclusive(0, gLevel.SIZE - 1)
+        if (gBoard[rndIdxRow][colIdxRnd].isMine) continue
+        if (gBoard[firstClickI][firstClickJ] === gBoard[rndIdxRow][colIdxRnd]) continue
+        gBoard[rndIdxRow][colIdxRnd].isMine = true
+        gGame.minesPlaced++
+        gBoard[rndIdxRow][colIdxRnd].minesAroundCount = null
+    }
+}
+
+// active manula mode - user place the mines
+function changeToManual() {
+    isManual = true
+    init()
+}
 
 //  Render the board as a <table> to the page
 function renderBoard(gBoard) {
@@ -118,11 +145,12 @@ function renderBoard(gBoard) {
 
 // updating minds count after first click
 
-function updateMindsCount() {
+function updateMinesCount() {
 
     for (var i = 0; i < gLevel.SIZE; i++) {
         for (var j = 0; j < gLevel.SIZE; j++) {
             var mines = setMinesNegsCount(gBoard, i, j)
+            if (gBoard[i][j].minesAroundCount === null) continue
             gBoard[i][j].minesAroundCount = mines
         }
     }
@@ -147,29 +175,61 @@ function setMinesNegsCount(gBoard, cellI, cellJ) {
 // Called when a cell (td) is clicked
 function cellClicked(elCell, i, j) {
 
+    // placing mines randomly if manual mode is off
+    if (!gGame.minesPlaced && !isManual) {
+        placeMinesRnd(i, j)
+        updateMinesCount()
+    }
+
     var cellContent = (gBoard[i][j].isMine) ? MINE : gBoard[i][j].minesAroundCount
 
-    // updating game started and time is taken
-    if (!gGame.isOn) gameStarted()
-    // first click - if mind moves it, updating minds count... if is showncount = 0 its first click
-    updateMindsCount()
+    // flipping cells by there content - continue accordingly
+    if (elCell.classList.contains('hidden')&& (!gBoard[i][j].isMarked) && gGame.minesPlaced === gLevel.MINES) {
 
-    if (elCell.classList.contains('hidden')) {
-
-        if ((cellContent === MINE) && (!elCell.classList.contains('flipped'))) {
-            // bombed()
+        // MINE
+        if ((cellContent === MINE)) {
             gGame.lives--
             console.log(gGame.lives, 'more lives has left')
-            if (!gGame.lives) gameOver()
+            gElSmileBtn.innerText = SMILE_BOMBED
+            LIVES = ' '
+            for (var i=0; i<gGame.lives; i++){
+                LIVES += '❤️'
+            }
+            gElLive.innerText = LIVES
+            if (!gGame.lives) {
+                flipCell(elCell, i, j)
+                elCell.classList.add('bombed')
+                gameOver()
+            } else {
+            setTimeout(() => {
+                gElSmileBtn.innerText = SMILE
+            }, 1000);
         }
-        if (cellContent === 0) {
-            searchAroundEmptyCells(i, j)
-            // while cellcontent is 0 recursion?
-        }
-        flipCell(elCell, i, j)
-        console.log(checkWinner())
+    
+            // EMPTY - 0
+        } else if (!cellContent) {
+            expandShown(i, j)
+            flipCell(elCell, i, j)
+
+            //  NEGS NUMBER
+        } else { flipCell(elCell, i, j) }
+        if (checkWinner()) gElSmileBtn.innerText = SMILE_WIN
     }
+
+    // placing mines manualy if needed
+    if ((gGame.minesPlaced < gLevel.MINES) && isManual && !gBoard[i][j].isMine) {
+        gBoard[i][j].isMine = true
+        gGame.minesPlaced++
+        if (gGame.minesPlaced === gLevel.MINES) { gameStarted() }
+        updateMinesCount()
+    } else if (gBoard[i][j].isMine && !gGame.isOn) {
+        console.log('already placed a mine here')
+    }
+
+    // updating game started and time is taken for timer
+    if (!gGame.isOn && !isManual) gameStarted()
 }
+
 
 // "flipping cells" = changing classes and rendering content 
 function flipCell(elCell, cellI, cellJ) {
@@ -184,7 +244,7 @@ function flipCell(elCell, cellI, cellJ) {
 }
 
 // searching for empty cells around clicked cell
-function searchAroundEmptyCells(cellI, cellJ) {
+function expandShown(cellI, cellJ) {
 
     for (var i = cellI - 1; i <= cellI + 1; i++) {
         if (i < 0 || i >= gBoard.length) continue;
@@ -194,10 +254,11 @@ function searchAroundEmptyCells(cellI, cellJ) {
 
             var elCell = document.querySelector(`#cell-${i}-${j}`)
             if (!gBoard[i][j].minesAroundCount) {
+                if (gBoard[i][j].minesAroundCount === null) continue
 
                 if (elCell.classList.contains('hidden')) {
                     flipCell(elCell, i, j)
-                    searchAroundEmptyCells(i, j)
+                    expandShown(i, j)
                 }
             } else if (gBoard[i][j].minesAroundCount > 0) {
 
@@ -214,6 +275,7 @@ function searchAroundEmptyCells(cellI, cellJ) {
 // how to hide the context menu on right click?
 
 function cellMarked(elCell, cellI, cellJ) {
+    window.oncontextmenu = (e) => { e.preventDefault() }
     // updating game started and time is taken
     if (!gGame.isOn) gameStarted()
     if (gBoard[cellI][cellJ].isShown) return
@@ -226,7 +288,8 @@ function cellMarked(elCell, cellI, cellJ) {
         gBoard[cellI][cellJ].isMarked = true
         elCell.innerText = FLAG
         gGame.markedCount++
-        checkWinner()
+
+        if (checkWinner()) gElSmileBtn.innerText = SMILE_WIN
     }
 }
 
@@ -258,6 +321,7 @@ function checkWinner() {
             if (gBoard[i][j].isMine && gBoard[i][j].isMarked) detectedMines++
             if ((gGame.shownCount === otherCells) && (detectedMines === gLevel.MINES)) {
                 clearInterval(gameStartedInterval)
+                gElWinner.style.visibility = 'visible'
                 return true
             }
         }
@@ -267,7 +331,17 @@ function checkWinner() {
 
 // render you loose and stops interval
 function gameOver() {
-    console.log('you loose')
+    for (var i = 0; i < gBoard.length; i++) {
+        for (var j = 0; j < gBoard.length; j++) {
+            if (gBoard[i][j].isMine) {
+                var elCell = document.querySelector(`#cell-${i}-${j}`)
+                elCell.innerHTML = MINE
+                elCell.classList.remove('hidden')
+                elCell.classList.add('flipped')
+            }
+        }
+    }
+    gElGameOver.style.visibility = 'visible'
     clearInterval(gameStartedInterval)
 }
 
