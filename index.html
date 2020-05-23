@@ -14,18 +14,26 @@
     <h1 class="game-over">GAME OVER</h1>
     <h1 class="winner">YOU WIN!!!</h1>
     <div class="container">
-        <h2>MineSweeper</h2><hr>
-        
+        <h2>MineSweeper</h2>
+        <hr>
+
         <button onclick="init()" class="emoji">😄</button>
 
-        <div class="timer"></div>
-        <div class="life">Lifes - ❤️❤️❤️</div>
+        <div class="clue">
+            <span class="shadow" onclick="activeClueMode(this)">💡</span> 
+            <span class="shadow" onclick="activeClueMode(this)">💡</span> 
+            <span class="shadow" onclick="activeClueMode(this)">💡</span>
+        </div>
+  
+        <div class="life">Lifes - ❤️ ❤️ ❤️</div><br>
+
+        <div class="timer"></div><br>
 
         <button onclick="safeClick()" class="safe-click">SAFE CLICK</button>
         <button onclick="setMode(this)" class="easy">Easy</button>
         <button onclick="setMode(this)" class="med">Medium</button>
         <button onclick="setMode(this)" class="hard">Hard</button>
-        
+
 
         <table class="center">
             <tbody class="game-board"></tbody>
@@ -39,4 +47,3 @@
 </body>
 
 </html>
-

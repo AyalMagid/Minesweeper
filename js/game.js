@@ -5,6 +5,7 @@ const SMILE = '😄'
 const SMILE_BOMBED = '🤯'
 const SMILE_WIN = '😎'
 var LIVES = ' '
+var CLUE = '💡'
 var gElSmileBtn = document.querySelector('.emoji')
 var gameStartedInterval
 var gBoard = []
@@ -14,6 +15,8 @@ var gElGameOver = document.querySelector('.game-over')
 var gElWinner = document.querySelector('.winner')
 var elSafeClick = document.querySelector('.safe-click')
 var gSafeClicks = 0
+var gClue = false
+var gElBulb 
 
 // This is an object by which the board size is set
 var gLevel = {
@@ -178,8 +181,48 @@ function setMinesNegsCount(gBoard, cellI, cellJ) {
     return minesCount
 }
 
+// when asking for a clue
+function activeClueMode(elBulb) {
+    gClue = true
+    gElBulb = elBulb
+}
+
+// Showing around cells
+function showAround(cellI, cellJ) {
+    console.log('showaround')
+    var cellToShow = []
+    for (var i = cellI - 1; i <= cellI + 1; i++) {
+        if (i < 0 || i >= gBoard.length) continue;
+        for (var j = cellJ - 1; j <= cellJ + 1; j++) {
+            if (j < 0 || j >= gBoard.length) continue;
+            var elCell = document.querySelector(`#cell-${i}-${j}`)
+            if (elCell.classList.contains('flipped')) continue
+            cellToShow.push({ i: i, j: j })
+            elCell.classList.add('flipped')
+            elCell.innerText = (!gBoard[i][j].isMine) ? gBoard[i][j].minesAroundCount : MINE
+        }
+    }
+    setTimeout(() => {
+        gElBulb.classList.remove('shadow')
+        for (i = 0; i < cellToShow.length; i++) {
+            elCell = document.querySelector(`#cell-${cellToShow[i].i}-${cellToShow[i].j}`)
+            elCell.classList.remove('flipped')
+            elCell.classList.add('hidden')
+            elCell.innerText = ' '
+        }
+    }, 1500);
+}
+
+
 // Called when a cell (td) is clicked
 function cellClicked(elCell, i, j) {
+
+    // making sure it isnt a clue
+    if (gClue) {
+        showAround(i, j)
+        gClue = false
+        return
+    }
 
     // placing mines randomly if manual mode is off
     if (!gGame.minesPlaced && !isManual) {
@@ -313,9 +356,9 @@ function safeClick() {
         if (!gBoard[rndRowIdx][rndColIdx].isMine) {
             elCell.classList.add('outline')
             gSafeClicks++
-            setTimeout (() => {
+            setTimeout(() => {
                 elCell.classList.remove('outline')
-            },2000)
+            }, 2000)
             return
         }
     }
@@ -349,6 +392,7 @@ function checkWinner() {
             if ((gGame.shownCount === otherCells) && (detectedMines === gLevel.MINES)) {
                 clearInterval(gameStartedInterval)
                 gElWinner.style.visibility = 'visible'
+                elSafeClick.style.visibility = 'hidden'
                 return true
             }
         }
