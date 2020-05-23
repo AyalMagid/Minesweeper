@@ -12,6 +12,8 @@ var isManual = false
 var gElLive = document.querySelector('.life')
 var gElGameOver = document.querySelector('.game-over')
 var gElWinner = document.querySelector('.winner')
+var elSafeClick = document.querySelector('.safe-click')
+var gSafeClicks = 0
 
 // This is an object by which the board size is set
 var gLevel = {
@@ -39,12 +41,16 @@ var gGame = {
 function init() {
 
     gBoard = []
-    
+
+    gSafeClicks = 0
+
     gElLive.innerText = '❤️❤️❤️'
 
     gElGameOver.style.visibility = 'hidden'
 
     gElWinner.style.visibility = 'hidden'
+
+    elSafeClick.style.visibility = 'visible'
 
     gElSmileBtn.innerText = SMILE
 
@@ -184,7 +190,7 @@ function cellClicked(elCell, i, j) {
     var cellContent = (gBoard[i][j].isMine) ? MINE : gBoard[i][j].minesAroundCount
 
     // flipping cells by there content - continue accordingly
-    if (elCell.classList.contains('hidden')&& (!gBoard[i][j].isMarked) && gGame.minesPlaced === gLevel.MINES) {
+    if (elCell.classList.contains('hidden') && (!gBoard[i][j].isMarked) && gGame.minesPlaced === gLevel.MINES) {
 
         // MINE
         if ((cellContent === MINE)) {
@@ -192,7 +198,7 @@ function cellClicked(elCell, i, j) {
             console.log(gGame.lives, 'more lives has left')
             gElSmileBtn.innerText = SMILE_BOMBED
             LIVES = ' '
-            for (var i=0; i<gGame.lives; i++){
+            for (var i = 0; i < gGame.lives; i++) {
                 LIVES += '❤️'
             }
             gElLive.innerText = LIVES
@@ -201,11 +207,11 @@ function cellClicked(elCell, i, j) {
                 elCell.classList.add('bombed')
                 gameOver()
             } else {
-            setTimeout(() => {
-                gElSmileBtn.innerText = SMILE
-            }, 1000);
-        }
-    
+                setTimeout(() => {
+                    gElSmileBtn.innerText = SMILE
+                }, 1000);
+            }
+
             // EMPTY - 0
         } else if (!cellContent) {
             expandShown(i, j)
@@ -294,6 +300,27 @@ function cellMarked(elCell, cellI, cellJ) {
 }
 
 
+// bolding safe cells when user click the safeclick button
+function safeClick() {
+
+    if (gSafeClicks >= 3) return
+
+    for (var i = 0; i < gBoard.length; i++) {
+        var rndRowIdx = getRandomIntInclusive(0, gBoard.length - 1)
+        var rndColIdx = getRandomIntInclusive(0, gBoard.length - 1)
+        var elCell = document.querySelector(`#cell-${rndRowIdx}-${rndColIdx}`)
+        console.log(elCell)
+        if (!gBoard[rndRowIdx][rndColIdx].isMine) {
+            elCell.classList.add('outline')
+            gSafeClicks++
+            setTimeout (() => {
+                elCell.classList.remove('outline')
+            },2000)
+            return
+        }
+    }
+}
+
 // updating game is on + starting timer
 function gameStarted() {
 
@@ -342,6 +369,7 @@ function gameOver() {
         }
     }
     gElGameOver.style.visibility = 'visible'
+    elSafeClick.style.visibility = 'hidden'
     clearInterval(gameStartedInterval)
 }
 
